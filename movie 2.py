@@ -5,17 +5,13 @@
 
 
 import pandas as pd
-import numpy as np
 credits_df = pd.read_csv("C:\\Users\\ishan\\OneDrive\\Desktop\\credits.csv")
 movies_df = pd.read_csv("C:\\Users\\ishan\\OneDrive\\Desktop\\movies.csv")
-
-pd.set_option('display.max_columns',None)
-pd.set_option('display.max_rows',None)
-
 movies_df= movies_df.merge(credits_df, on='title')
 movies_df = movies_df[['movie_id','title','overview','genres','keywords','cast','crew']]
 movies_df.dropna(inplace=True)
 
+#abstract syntax trees
 import ast
 
 def convert(obj):
@@ -48,8 +44,9 @@ def fetch_director(obj):
     return L
 
 movies_df['crew']=movies_df['crew'].apply(fetch_director)
-movies_df['overview']=movies_df['overview'].apply(lambda x:x.split())
 
+#preprocessing
+movies_df['overview']=movies_df['overview'].apply(lambda x:x.split())
 movies_df['genres']=movies_df['genres'].apply(lambda x:[i.replace(" ","") for i in x])
 movies_df['keywords']=movies_df['keywords'].apply(lambda x:[i.replace(" ","") for i in x])
 movies_df['cast']=movies_df['cast'].apply(lambda x:[i.replace(" ","") for i in x])
@@ -60,11 +57,13 @@ new_df=movies_df[['movie_id','title','tags']]
 new_df['tags']=new_df['tags'].apply(lambda x:' '.join(x))
 new_df['tags']=new_df['tags'].apply(lambda x:x.lower())
 
+#vectorizing tags using count vectorizer; tool for converting collection of text documents into a matrix of token counts
 from sklearn.feature_extraction.text import CountVectorizer as ctv
 cv= ctv(max_features=5000, stop_words='english')
 vectors=cv.fit_transform(new_df['tags']).toarray()
+#each row(sample) represents a movie and each column(feature) is a token; matrix consists of token counts
 
-#import nltk
+#stemming function and applying stemming to tags
 from nltk.stem.porter import PorterStemmer
 ps = PorterStemmer()
 def stem(text):
@@ -74,9 +73,12 @@ def stem(text):
     return " ".join(y)
 
 new_df['tags']=new_df['tags'].apply(stem)
+
+#calculating cosine similarity
 from sklearn.metrics.pairwise import cosine_similarity as cs
 similarity = cs(vectors)
 
+#function to recommend movies
 def recommend():
     movie=entry.get()
     movie_index=new_df[new_df['title']==movie].index[0]
@@ -86,57 +88,19 @@ def recommend():
         recommendation=Label(text=new_df.iloc[i[0]].title)
         recommendation.pack()
         
-        
-        
+#Small Soldiers, Avatar, Tangled, Avengers: Age of Ultron, The Avengers, Titanic, Iron Man 3, Up, Iron Man, Frozen, Thor, Hulk, Kung Fu Panda, Cinderella, Toy Story 3, Enchanted             
 
-#recommend('Small Soldiers')
+#Creating GUI
 import tkinter as tk
 from tkinter import *
 from PIL import Image, ImageTk
 
-def display_name():
-    name = entry.get()
-    display_label.config(text=f"{name}")
-
-#creating tk object
 root = tk.Tk()
 root.title("MovieClick.com")
 root.geometry("500x400")
 root.minsize(200,200)
-#entry_message=Label(text="Today's picks:")
 entry_message=Label(text="Enter name of the movie you watched:")
 entry_message.pack(pady=10)
-
-
-
-import openpyxl
-from openpyxl import Workbook
-from openpyxl.styles import Font
-
-import random
-
-random_numbers=[]
-for i in range(0,5):
-    r1=random.randint(1,4805)
-    random_numbers.append(r1)
-    
-#random_numbers = [random.randint(2, 4804) for i in range(5)]
-
-#csv_file_path = "C:\\Users\\ishan\\OneDrive\\Desktop\\movies.csv"
-#df=pd.read_csv(csv_file_path)
-excel="C:\\Users\\ishan\\OneDrive\\Desktop\\movie.xlsx"
-#with pd.ExcelWriter('C:\\Users\\ishan\\OneDrive\\Desktop\\movie.xlsx', engine='openpyxl') as writer:
- #   df.to_excel(writer, index=False)
-
-        
-
-wb=openpyxl.load_workbook(excel)
-sheet=wb['Sheet1']
-'''
-for i in random_numbers:
-    movie_name=Label(text=str(sheet.cell(row=i,column=6).value))
-    movie_name.pack()
-    '''
 
 entry = tk.Entry(root)
 entry.pack(pady=10)
